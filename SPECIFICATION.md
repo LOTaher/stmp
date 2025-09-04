@@ -1,6 +1,6 @@
 # SplaT Middleware Protocol v1.0
 
-**Last Updated: August 14th, 2025**
+**Last Updated: September 4th, 2025**
 
 This document describes the SplaT Middleware Protocol (STMP).
 
@@ -8,17 +8,21 @@ STMP is used to build all the network applications I run which require communica
 
 ## Packet Structure
 
+```
 +------------------+------------------------+-----------------------------+
 | Header (4 bytes) | Payload (< 1496 bytes) | Packet Termination (1 byte) |
 +------------------+------------------------+-----------------------------+
+```
 
 ### Header
 
 STMP's packet header is **4 bytes**
 
+```
 +------------------+---------------+-------------------+----------------+
 | Version (1 byte) | Type (1 byte) | Argument (1 byte) | Flags (1 byte) |
 +------------------+---------------+-------------------+----------------+
+```
 
 #### Version
 
@@ -99,7 +103,3 @@ Payloads are represented in ASCII characters (hexadecimal values from 0 to 127).
 ### Packet Termination
 
 **Every** STMP packet is terminated by the byte **0x7F**, DEL in ASCII.
-
---
-
-Happy hacking!
