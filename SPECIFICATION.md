@@ -1,8 +1,8 @@
-# SplaT Messaging Protocol v1.0
+# SplaT Middleware Protocol v1.0
 
 **Last Updated: August 14th, 2025**
 
-This document describes the SplaT Messaging Protocol (STMP).
+This document describes the SplaT Middleware Protocol (STMP).
 
 STMP is used to build all the network applications I run which require communication with each other.
 

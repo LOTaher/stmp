@@ -1,4 +1,4 @@
-/*  stmpendpoints.h - SplaT Messaging Protocol C endpoint definitions
+/*  stmpendpoints.h - SplaT Middleware Protocol C endpoint definitions
     Copyright (C) 2025 splatte.dev
 
     This program is free software: you can redistribute it and/or modify

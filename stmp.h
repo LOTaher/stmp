@@ -1,4 +1,4 @@
-/*  stmp.h - SplaT Messaging Protocol C library definition file
+/*  stmp.h - SplaT Middleware Protocol C library definition file
     Copyright (C) 2024 splatte.dev
 
     This program is free software: you can redistribute it and/or modify

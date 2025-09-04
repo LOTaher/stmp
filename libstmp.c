@@ -1,4 +1,4 @@
-/*  libstmp.c - SplaT Messaging Protocol C API
+/*  libstmp.c - SplaT Middleware Protocol C API
     Copyright (C) 2025 splatte.dev
 
     This program is free software: you can redistribute it and/or modify
