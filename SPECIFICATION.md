@@ -53,7 +53,7 @@ arguments supported for each message type.
 | Type | Argument | Byte | Direction |
 |:--:|:--:|:--:|----|
 | INIT |  INIT  | 0x01 | Client -> Server |
-| INIT   | ACCEPT | 0x02 | Server -> Client |
+| INIT   | ACCEPT | 0x02 | Client <- Server |
 
 **PING**
 
