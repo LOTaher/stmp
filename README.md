@@ -1,4 +1,4 @@
-# SplaT Middleware Protocol v1.0
+# SplaT Middleware Protocol v1.0 Specification
 
 **Last Updated: September 4th, 2025**
 
@@ -14,7 +14,7 @@ STMP is used to build all the network applications I run which require communica
 +------------------+------------------------+-----------------------------+
 ```
 
-### Header
+## Header
 
 STMP's packet header is **4 bytes**
 
@@ -24,11 +24,12 @@ STMP's packet header is **4 bytes**
 +------------------+---------------+-------------------+----------------+
 ```
 
-#### Version
+### Version
 
-STMP's current version is **1.0.0**. This is represented by the byte **0x01**.
+STMP's current version is **1.0.0**. This is represented by the byte **0x01**. This is the only
+byte available at the moment..
 
-#### Type
+### Type
 
 STMP supports five types of messages.
 
@@ -43,7 +44,7 @@ STMP supports five types of messages.
 The **PING** message type is used to see if a client is still alive. By no means is it required in
 an implementation, but ultimately up to you to use.
 
-#### Argument
+### Argument
 
 For each **message type**, STMP requires a single **argument**. Below is a detailed list of the
 arguments supported for each message type.
@@ -85,9 +86,10 @@ arguments supported for each message type.
 | INVALID |  FLAGS  | 0x05 | Client <- Server |
 | INVALID   | PAYLOAD | 0x06 | Client <- Server |
 
-#### Flags
+### Flags
 
 An STMP flags header byte is 1 byte, but is used for bitwise operations up to the implementation.
+
 You can have up to eight different flags per packet. For example, if I use the the hexadecimal value
 **0x07** to represent the bits **111**. You can use operations like `(1 << 0)` and `(1 << 1)` to define flags.
 
