@@ -105,3 +105,18 @@ Payloads are represented in ASCII characters (hexadecimal values from 0 to 127).
 ### Packet Termination
 
 **Every** STMP packet is terminated by the byte **0x7F**, DEL in ASCII.
+
+## To Note
+
+This is a **caller frees** API. Remember to `free()` your packet payload's after deserializing:
+
+```c
+stmp_deserialize(buffer, sizeof(buffer), &packet, &result);
+// ...
+free(packet->payload)
+```
+
+The specification can and will be changed by me without any notice. Released versions will remain backwards
+compatible.
+
+Happy hacking!

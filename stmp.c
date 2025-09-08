@@ -14,12 +14,12 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 
-#include "stmp.h"
-
 #include <stdint.h>
 #include <stdlib.h>
 #include <strings.h>
 #include <stdio.h>
+
+#include "stmp.h"
 
 /**
  * stmp_init_result - initializes stmp_result struct to default values
@@ -263,41 +263,3 @@ void stmp_deserialize(uint8_t *buffer, size_t size, struct stmp_packet *packet, 
     result->size = packetTerminateIndex;
     result->error = STMP_ERR_NONE;
 }
-
-// int main (void)
-// {
-//     // char *test = "hello\0";
-//     struct stmp_packet packet = {
-//         .version = 1,
-//         .type = STMP_TYPE_PING,
-//         .arg = STMP_ARG_PING,
-//         .flags = STMP_FLAGS_NONE,
-//         .payload = STMP_PAYLOAD_EMPTY
-//     };
-//
-//     struct stmp_result result = {0};
-//
-//     uint8_t buffer[20];
-//
-//     stmp_serialize(buffer, sizeof(buffer), &packet, &result);
-//
-//     if (result.error != STMP_ERR_NONE) {
-//         printf("Hit an error: %d\n", result.error);
-//         return 1;
-//     }
-//
-//     for (int i = 0; i < sizeof(buffer); i++) {
-//         printf("%d\n", buffer[i]);
-//     }
-//
-//     stmp_deserialize(buffer, sizeof(buffer), &packet, &result);
-//     printf("result error: %d\n", result.error);
-//
-//     printf("packet version after deserialize: %d\n", packet.version);
-//     printf("packet type after deserialize: %d\n", packet.type);
-//     printf("packet arg after deserialize: %d\n", packet.arg);
-//     printf("packet flags after deserialize: %d\n", packet.flags);
-//     printf("packet payload after deserialize: %s\n", packet.payload);
-//
-//     return 0;
-// }
