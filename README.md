@@ -113,7 +113,7 @@ This is a **caller frees** API. Remember to `free()` your packet payload's after
 ```c
 stmp_deserialize(buffer, sizeof(buffer), &packet, &result);
 // ...
-free(packet->payload)
+free(packet->payload);
 ```
 
 The specification can and will be changed by me without any notice. Released versions will remain backwards
