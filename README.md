@@ -26,8 +26,8 @@ STMP's packet header is **4 bytes**
 
 ### Version
 
-STMP's current version is **2.0.0**. This is represented by the byte **0x02**. This is the only
-byte available at the moment.
+STMP's current version is **2.0.0**. This is represented by the byte **0x02**. Versions below
+would be specified as **0x01** for version 1.0.0, etc.
 
 ### Type
 
@@ -90,13 +90,13 @@ arguments supported for each message type.
 
 An STMP flags header byte is 1 byte, but is used for bitwise operations up to the implementation.
 
-You can have up to eight different flags per packet. For example, if I use the the hexadecimal value
+You can have up to eight different flags per packet. For example, if you use the the hexadecimal value
 **0x07** to represent the bits **111**. You can use operations like `(1 << 0)` and `(1 << 1)` to define flags.
 
 ### Payload
 
 Every STMP packet has a payload that can be at most 1496 bytes. Certain message types require an
-empty payload. The maximum payload size ensures packets fit within a 1500-byte MTU.
+empty payload. The maximum payload size ensures packets fit within a 1500 byte MTU.
 
 Every STMP packet includes a payload of at least one byte. An "empty payload" is represented by a
 single byte with the value `0x00`.
