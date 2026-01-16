@@ -1,6 +1,6 @@
-# SplaT Middleware Protocol v1.0 Specification
+# SplaT Middleware Protocol v2.0.0 Specification
 
-**Last Updated: September 4th, 2025**
+**Last Updated: January 16th, 2026**
 
 This document describes the SplaT Middleware Protocol (STMP).
 
