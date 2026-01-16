@@ -32,7 +32,7 @@ void stmp_packet_serialize(u8* buffer, size_t size, const stmp_packet* packet, s
     }
 
     s32 version = 0;
-    for (s32 i = 0; i < ARR_LENGTH(stmp_versions); i++) {
+    for (size_t i = 0; i < ARR_LENGTH(stmp_versions); i++) {
         if (packet->version == stmp_versions[i]) {
             version = stmp_versions[i];
             break;
@@ -124,7 +124,7 @@ void stmp_packet_deserialize(const u8* buffer, size_t size, stmp_packet* packet,
     }
 
     s32 version = 0;
-    for (s32 i = 0; i < ARR_LENGTH(stmp_versions); i++) {
+    for (size_t i = 0; i < ARR_LENGTH(stmp_versions); i++) {
         if (buffer[0] == stmp_versions[i]) {
             version = buffer[0];
             break;
