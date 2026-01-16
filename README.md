@@ -26,8 +26,8 @@ STMP's packet header is **4 bytes**
 
 ### Version
 
-STMP's current version is **1.0.0**. This is represented by the byte **0x01**. This is the only
-byte available at the moment..
+STMP's current version is **2.0.0**. This is represented by the byte **0x02**. This is the only
+byte available at the moment.
 
 ### Type
 
@@ -36,7 +36,7 @@ STMP supports five types of messages.
 | Type | Byte | Description |
 |:--:|:--:|:--:|
 |  INIT  |  0x01  |  The initial handshake between clients  |
-|  PING  |  0x02  |  Continuously ping client to ensure the connection is alive  |
+|  PING  |  0x02  |  Periodic keepalive message to ensure the connection is still alive  |
 |  SEND  |  0x03  |  Send a message to another client  |
 |  TERM  |  0x04  |  Notify client that the connection is terminated  |
 |  INVALID  | 0x05   |  Notify client that an invalid message was sent   |
@@ -96,27 +96,32 @@ You can have up to eight different flags per packet. For example, if I use the t
 ### Payload
 
 Every STMP packet has a payload that can be at most 1496 bytes. Certain message types require an
-empty payload. Empty payloads are represented by the byte **0x00**, the ASCII NULL character.
+empty payload. The maximum payload size ensures packets fit within a 1500-byte MTU.
+
+Every STMP packet includes a payload of at least one byte. An "empty payload" is represented by a
+single byte with the value `0x00`.
 
 The message types that require an empty payload are **INIT** and **INVALID**.
 
-Payloads are represented in ASCII characters (hexadecimal values from 0 to 127).
+Payloads are binary data. Interpretation of payload contents is left to the application.
 
 ### Packet Termination
 
 **Every** STMP packet is terminated by the byte **0x7F**, DEL in ASCII.
 
-## To Note
+The termination byte is not part of the payload.
 
-This is a **caller frees** API. Remember to `free()` your packet payload's after deserializing:
+### Memory Ownership
 
-```c
-stmp_deserialize(buffer, sizeof(buffer), &packet, &result);
-// ...
-free(packet->payload);
-```
+STMP does not allocate memory for packet payloads.
 
-The specification can and will be changed by me without any notice. Released versions will remain backwards
-compatible.
+After deserialization, `stmp_packet.payload` points directly into the caller-provided buffer.
+The buffer **must remain valid** for as long as the packet is in use.
 
-Happy hacking!
+Do **not** call `free()` on `stmp_packet.payload`.
+
+If ownership is required, the caller must explicitly copy the payload.
+
+### Closing
+
+Future versions may extend this specification. Existing versions will remain backwards compatible.

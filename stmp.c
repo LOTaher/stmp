@@ -1,78 +1,45 @@
-/*  stmp.c - SplaT Middleware Protocol C library implementation file
-    Copyright (C) 2025 splatte.dev
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>. */
-
-#include <stdint.h>
-#include <stdlib.h>
-#include <strings.h>
-#include <stdio.h>
+#include <string.h>
+#include "lt_base.h"
 
 #include "stmp.h"
 
-/**
- * stmp_init_result - initializes stmp_result struct to default values
- * @result - the result structure to initialize
- */
-void stmp_init_result(struct stmp_result *result)
-{
-    result->size = 0;
-    result->error = STMP_ERR_NONE;
-}
-
-/**
- * stmp_init_packet - initializes stmp_packet struct to default values
- * @packet - the packet structure to initialize
- */
-void stmp_init_packet(struct stmp_packet *packet)
-{
+void stmp_packet_init(stmp_packet* packet) {
     packet->version = 0;
     packet->type = 0;
     packet->arg = 0;
     packet->flags = 0;
 
     packet->payload = NULL;
+    packet->payload_length = 0;
 }
 
-/**
- * stmp_serialize - serialize a stmp_packet into a buffer
- * @buffer - the buffer the struct will be serialized into
- * @size - the size of the buffer
- * @packet - the packet to serialize from
- * @result - the result of the serialization
- */
-void stmp_serialize(uint8_t *buffer, size_t size, struct stmp_packet *packet, struct stmp_result *result)
-{
-    int packetTerminateIndex = STMP_PACKET_HEADER_SIZE;
+void stmp_result_init(stmp_result* result) {
+    result->size = 0;
+    result->error = STMP_ERR_NONE;
+}
 
-    stmp_init_result(result);
-    bzero(buffer, size);
-
-    if (size < STMP_PACKET_MIN_SIZE || size > STMP_PACKET_MAX_SIZE) {
-        result->error = STMP_ERR_BAD_SIZE;
+void stmp_packet_serialize(u8* buffer, size_t size, const stmp_packet* packet, stmp_result* result) {
+    if (!buffer || !packet || !result) {
+        result->error = STMP_ERR_BAD_INPUT;
         return;
     }
 
-    int version = 0;
-    for (int i = 0; i < sizeof(stmp_versions) / sizeof(stmp_versions[0]); i++) {
+    stmp_result_init(result);
+
+    if (!packet->payload || packet->payload_length < 1) {
+        result->error = STMP_ERR_BAD_PAYLOAD;
+        return;
+    }
+
+    s32 version = 0;
+    for (s32 i = 0; i < ARR_LENGTH(stmp_versions); i++) {
         if (packet->version == stmp_versions[i]) {
             version = stmp_versions[i];
             break;
         }
     }
 
-    if (version == 0) {
+    if (!version) {
         result->error = STMP_ERR_BAD_VERSION;
         return;
     }
@@ -81,7 +48,6 @@ void stmp_serialize(uint8_t *buffer, size_t size, struct stmp_packet *packet, st
         result->error = STMP_ERR_BAD_TYPE;
         return;
     }
-
 
     switch (packet->type) {
         case STMP_TYPE_INIT:
@@ -116,9 +82,18 @@ void stmp_serialize(uint8_t *buffer, size_t size, struct stmp_packet *packet, st
             break;
     }
 
-    if ((packet->type == STMP_TYPE_INVALID || packet->type == STMP_TYPE_INIT)
-        && packet->payload != STMP_PAYLOAD_EMPTY) {
-        result->error = STMP_ERR_BAD_PAYLOAD;
+    if ((packet->type == STMP_TYPE_INIT || packet->type == STMP_TYPE_INVALID)) {
+        if (!(packet->payload_length == 1 && packet->payload[0] == STMP_PAYLOAD_EMPTY)) {
+            result->error = STMP_ERR_BAD_PAYLOAD;
+            return;
+        }
+    }
+
+    size_t total_size = STMP_PACKET_HEADER_SIZE + packet->payload_length + 1;
+
+    if (total_size < STMP_PACKET_MIN_SIZE || total_size > STMP_PACKET_MAX_SIZE
+        || size < total_size) {
+        result->error = STMP_ERR_BAD_SIZE;
         return;
     }
 
@@ -127,49 +102,31 @@ void stmp_serialize(uint8_t *buffer, size_t size, struct stmp_packet *packet, st
     buffer[2] = packet->arg;
     buffer[3] = packet->flags;
 
-    for (int i = 0; i < STMP_PACKET_MAX_SIZE - STMP_PACKET_HEADER_SIZE - i; i++) {
-        if (packet->payload == STMP_PAYLOAD_EMPTY) {
-            packetTerminateIndex = STMP_PACKET_HEADER_SIZE + i + 1;
-            break;
-        }
+    memcpy(buffer + STMP_PACKET_HEADER_SIZE, packet->payload, packet->payload_length);
 
-        buffer[STMP_PACKET_HEADER_SIZE + i] = packet->payload[i];
-        if (packet->payload[i] == '\0') {
-            packetTerminateIndex = STMP_PACKET_HEADER_SIZE + i + 1;
-            break;
-        }
-    }
+    buffer[STMP_PACKET_HEADER_SIZE + packet->payload_length] = STMP_PACKET_TERMINATE;
 
-    buffer[packetTerminateIndex] = STMP_PACKET_TERMINATE;
-
-    result->size = packetTerminateIndex;
+    result->size = total_size;
     result->error = STMP_ERR_NONE;
 }
 
-/**
- * stmp_deserialize - deserialize a buffer into a stmp_packet
- * @buffer - the buffer to deserialize from
- * @size - the size of the buffer
- * @packet - the packet to deserialize into
- * @result - the result of the serialization
- */
-void stmp_deserialize(uint8_t *buffer, size_t size, struct stmp_packet *packet, struct stmp_result *result)
-{
-    int payloadSize = 0;
-    int packetTerminateIndex = STMP_PACKET_HEADER_SIZE;
+void stmp_packet_deserialize(const u8* buffer, size_t size, stmp_packet* packet, stmp_result* result) {
+    if (!buffer || !packet || !result) {
+        result->error = STMP_ERR_BAD_INPUT;
+        return;
+    }
 
-    stmp_init_packet(packet);
-    bzero(packet, sizeof(struct stmp_packet));
+    stmp_packet_init(packet);
 
     if (size < STMP_PACKET_MIN_SIZE || size > STMP_PACKET_MAX_SIZE) {
         result->error = STMP_ERR_BAD_SIZE;
         return;
     }
 
-    int version = 0;
-    for (int i = 0; i < sizeof(stmp_versions) / sizeof(stmp_versions[0]); i++) {
+    s32 version = 0;
+    for (s32 i = 0; i < ARR_LENGTH(stmp_versions); i++) {
         if (buffer[0] == stmp_versions[i]) {
-            version = stmp_versions[i];
+            version = buffer[0];
             break;
         }
     }
@@ -179,12 +136,12 @@ void stmp_deserialize(uint8_t *buffer, size_t size, struct stmp_packet *packet, 
         return;
     }
 
-    if (buffer[1] < STMP_TYPE_INIT && buffer[1] > STMP_TYPE_INVALID) {
+    if (buffer[1] < STMP_TYPE_INIT || buffer[1] > STMP_TYPE_INVALID) {
         result->error = STMP_ERR_BAD_TYPE;
         return;
     }
 
-    switch (packet->type) {
+    switch (buffer[1]) {
         case STMP_TYPE_INIT:
             if (buffer[2] < STMP_ARG_INIT_INIT || buffer[2] > STMP_ARG_INIT_ACCEPT) {
                 result->error = STMP_ERR_BAD_ARG;
@@ -228,38 +185,37 @@ void stmp_deserialize(uint8_t *buffer, size_t size, struct stmp_packet *packet, 
         return;
     }
 
-    char *payload = malloc(sizeof(char) * (STMP_PACKET_MAX_SIZE - STMP_PACKET_HEADER_SIZE));
-    if (payload == NULL) {
-        result->error = STMP_ERR_BAD_MALLOC;
-        return;
-    }
-
-    for (int i = 0; i < STMP_PACKET_MAX_SIZE - STMP_PACKET_HEADER_SIZE - i; i++) {
-        payload[i] = buffer[STMP_PACKET_HEADER_SIZE + i];
-        payloadSize++;
-        if (buffer[STMP_PACKET_HEADER_SIZE + i] == '\0') {
-            break;
-        }
-    }
-
-    void *r = realloc(payload, payloadSize);
-    if (r == NULL) {
-        result->error = STMP_ERR_BAD_MALLOC;
-        free(payload);
-        return;
-    }
-
-    payload = r;
-
-    packet->payload = payload;
-    packetTerminateIndex = STMP_PACKET_HEADER_SIZE + payloadSize;
-
-    if (buffer[packetTerminateIndex] != STMP_PACKET_TERMINATE) {
+    if (buffer[size - 1] != STMP_PACKET_TERMINATE) {
         result->error = STMP_ERR_BAD_TERMINATE;
-        free(payload);
         return;
     }
 
-    result->size = packetTerminateIndex;
+    if (size < STMP_PACKET_HEADER_SIZE + 1) {
+        result->error = STMP_ERR_BAD_SIZE;
+        return;
+    }
+
+    size_t payload_length = size - STMP_PACKET_HEADER_SIZE - 1;
+
+    if (payload_length < 1) {
+        result->error = STMP_ERR_BAD_PAYLOAD;
+        return;
+    }
+
+	if ((packet->type == STMP_TYPE_INIT || packet->type == STMP_TYPE_INVALID)
+        && payload_length != 1) {
+	    result->error = STMP_ERR_BAD_PAYLOAD;
+	    return;
+	}
+
+	if (payload_length == 1 && buffer[STMP_PACKET_HEADER_SIZE] != STMP_PAYLOAD_EMPTY) {
+	    result->error = STMP_ERR_BAD_PAYLOAD;
+	    return;
+	}
+
+    packet->payload = buffer + STMP_PACKET_HEADER_SIZE;
+    packet->payload_length = payload_length;
+
+    result->size = size;
     result->error = STMP_ERR_NONE;
 }
